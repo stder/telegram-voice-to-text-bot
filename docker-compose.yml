@@ -1,0 +1,16 @@
+services:
+  voice-recognizer-bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./models:/models
+    # Set WHISPER_CPU_THREADS to the same number whenever you uncomment this.
+    # CTranslate2 otherwise spawns one thread per HOST core, and they burn the
+    # quota spinning on OpenMP barriers: 68s vs 8s for the same audio at --cpus=1.
+    # cpus: 2
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
