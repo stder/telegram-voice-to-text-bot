@@ -11,26 +11,33 @@ Speech recognition runs on the CPU through
 [faster-whisper](https://github.com/SYSTRAN/faster-whisper) (OpenAI's Whisper model), so
 a cheap VPS without a GPU is enough. Setup is one `docker compose` command.
 
-## Getting started
+## Quick start
 
-1. Get a token from [@BotFather](https://t.me/BotFather) (`/newbot`).
-2. Look up your user id with [@userinfobot](https://t.me/userinfobot).
-3. Fill in `.env`:
+Nothing to clone and nothing to build — the image is published to GHCR for both x86-64
+and arm64. You need Docker and about five minutes.
+
+1. Create a bot with [@BotFather](https://t.me/BotFather) (send it `/newbot`) and copy
+   the token it gives you.
+2. Get your numeric user id from [@userinfobot](https://t.me/userinfobot).
+3. Download two files into an empty folder and fill in those two values:
 
 ```sh
-cp .env.example .env
-$EDITOR .env   # BOT_TOKEN + ALLOWED_USER_IDS
+curl -O https://raw.githubusercontent.com/stder/telegram-voice-to-text-bot/main/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/stder/telegram-voice-to-text-bot/main/.env.example
+nano .env      # BOT_TOKEN=... and ALLOWED_USER_IDS=...
 ```
 
-4. Bring it up:
+4. Start it:
 
 ```sh
-docker compose up -d --build
+docker compose up -d
 docker compose logs -f
 ```
 
-The first start downloads the model weights (`large-v3-turbo` ≈ 1.6 GB) into `./models`,
-which takes a minute or two. After that they come from the cache.
+The first start downloads the model weights (`large-v3-turbo` ≈ 1.6 GB), which takes a
+minute or two. They are stored in a Docker volume and reused on every later start.
+
+Once the log says `running as @yourbotname`, send the bot a voice message.
 
 ## What it accepts
 
@@ -126,6 +133,48 @@ A 1 GB host handles `small`; 2 GB handles turbo, but tightly enough that a 2 GB 
 is worth adding, or the peak during model loading meets the OOM killer. On Docker
 Desktop, give the container at least 4 GB for `large-v3` (Settings → Resources).
 
+## Troubleshooting
+
+**The bot doesn't reply at all.** Look at `docker compose logs`.
+
+- `config: BOT_TOKEN is empty` — `.env` was not picked up. It must sit in the same folder
+  as `docker-compose.yml` and be named exactly `.env`.
+- The log stops at `running as @yourbotname` and nothing happens when you write to the
+  bot — your id is most likely missing from `ALLOWED_USER_IDS`. Rejected senders appear in
+  the log as `blocked: user_id=...`; copy that number into the variable, or clear the
+  variable entirely to allow everyone.
+- Nothing in the log at all after sending a voice message — you are probably writing to a
+  different bot than the one whose token is in `.env`.
+
+**The container restarts in a loop, or dies during startup.** Almost always memory. The
+default model needs about 1.5 GB while loading; if the host has 2 GB and no swap, the
+kernel kills the process. Either add a 2 GB swap file, or switch to a smaller model:
+
+```sh
+echo "WHISPER_MODEL=small" >> .env && docker compose up -d
+```
+
+**The weights download on every restart.** The `models` volume is missing from your
+`docker-compose.yml`, or you are running `docker compose down -v`, which deletes volumes.
+Use plain `docker compose down`.
+
+**Recognized as the wrong language.** Auto-detection works from the audio itself and can
+slip on short or noisy recordings. If your voice messages are always in one language, set
+it explicitly — this is both more accurate and slightly faster:
+
+```sh
+echo "WHISPER_LANGUAGE=en" >> .env && docker compose up -d
+```
+
+**"Couldn't fetch the file: file is too big".** A Telegram Bot API limit, not a bot
+setting: bots may download files up to 20 MB. Voice messages are far below that, but a
+forwarded uncompressed recording can exceed it.
+
+**Transcription is very slow.** Check how many cores the container actually gets. A single
+core takes about 38 seconds per minute of audio on the default model; `small` brings that
+down to roughly 12 seconds with a modest accuracy loss. See
+[Choosing a model](#choosing-a-model).
+
 ## Limitations
 
 - The Bot API serves files **up to 20 MB**. For voice messages that is hours of audio,
@@ -147,10 +196,20 @@ app/
 tests/            — unit tests for the pure functions
 ```
 
-Tests:
+Build and run from this checkout instead of the published image:
+
+```sh
+git clone https://github.com/stder/telegram-voice-to-text-bot.git
+cd telegram-voice-to-text-bot
+cp .env.example .env && $EDITOR .env
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
+
+Tests and linter:
 
 ```sh
 python3 -m unittest
+uvx ruff check .
 ```
 
 Running without Docker:

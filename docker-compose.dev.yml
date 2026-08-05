@@ -1,0 +1,6 @@
+# Overlay that builds the image from this checkout instead of pulling it from GHCR:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+services:
+  voice-recognizer-bot:
+    build: .
+    image: telegram-voice-to-text-bot:dev

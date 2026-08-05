@@ -65,12 +65,10 @@ class SettingsFromEnv(unittest.TestCase):
             )
 
     def test_missing_token(self):
-        with mock.patch.dict(os.environ, {}, clear=True):
-            with self.assertRaises(ConfigError):
-                Settings.from_env()
+        with mock.patch.dict(os.environ, {}, clear=True), self.assertRaises(ConfigError):
+            Settings.from_env()
 
     def test_bad_int(self):
         env = {"BOT_TOKEN": "x", "WHISPER_BEAM_SIZE": "five"}
-        with mock.patch.dict(os.environ, env, clear=True):
-            with self.assertRaises(ConfigError):
-                Settings.from_env()
+        with mock.patch.dict(os.environ, env, clear=True), self.assertRaises(ConfigError):
+            Settings.from_env()

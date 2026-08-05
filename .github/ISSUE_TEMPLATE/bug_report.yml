@@ -1,0 +1,62 @@
+name: Bug report
+description: Something doesn't work
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: the README has a **Troubleshooting** section covering the five
+        most common cases (silent bot, out-of-memory, weights re-downloading, wrong
+        language, file too large). Please check it first.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Output of `docker compose logs --tail=50`. Remove your bot token if it appears.
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: WHISPER_MODEL
+      placeholder: large-v3-turbo
+    validations:
+      required: true
+
+  - type: input
+    id: hardware
+    attributes:
+      label: Host CPU cores and RAM
+      placeholder: 2 vCPU, 4 GB
+    validations:
+      required: true
+
+  - type: dropdown
+    id: arch
+    attributes:
+      label: Architecture
+      options:
+        - x86-64
+        - arm64
+        - not sure
+    validations:
+      required: true
+
+  - type: input
+    id: install
+    attributes:
+      label: How it was installed
+      placeholder: docker compose with the published image / built from source / without Docker
+    validations:
+      required: true

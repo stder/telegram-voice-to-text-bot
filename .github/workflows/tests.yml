@@ -16,3 +16,9 @@ jobs:
       # No pip install: the tested modules import nothing outside the stdlib,
       # so the whole job finishes in seconds.
       - run: python -m unittest -v
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3

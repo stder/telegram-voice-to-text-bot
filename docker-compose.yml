@@ -1,10 +1,15 @@
 services:
   voice-recognizer-bot:
-    build: .
+    image: ghcr.io/stder/telegram-voice-to-text-bot:latest
+    # To build from a source checkout instead of pulling the published image:
+    #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
     restart: unless-stopped
     env_file: .env
     volumes:
-      - ./models:/models
+      # Model weights (1.6 GB for the default model) live in a Docker volume, so they
+      # survive `docker compose down` and are downloaded only once.
+      # `docker compose down -v` deletes them.
+      - models:/models
     # Set WHISPER_CPU_THREADS to the same number whenever you uncomment this.
     # CTranslate2 otherwise spawns one thread per HOST core, and they burn the
     # quota spinning on OpenMP barriers: 68s vs 8s for the same audio at --cpus=1.
@@ -14,3 +19,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+volumes:
+  models:

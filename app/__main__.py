@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import os
+from pathlib import Path
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -10,6 +12,20 @@ from .handlers import router
 from .transcriber import Transcriber
 
 log = logging.getLogger("voice2text")
+
+HEARTBEAT_FILE = Path(os.getenv("HEARTBEAT_FILE", "/tmp/heartbeat"))
+HEARTBEAT_INTERVAL_SEC = 30
+
+
+async def _heartbeat() -> None:
+    """Touch a file so the container HEALTHCHECK can see the event loop is alive.
+
+    This catches a wedged or crashed loop inside a process that is still running.
+    It says nothing about Telegram reachability — aiogram reconnects on its own.
+    """
+    while True:
+        HEARTBEAT_FILE.touch()
+        await asyncio.sleep(HEARTBEAT_INTERVAL_SEC)
 
 
 async def main() -> None:
@@ -33,7 +49,12 @@ async def main() -> None:
     bot = Bot(settings.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     me = await bot.get_me()
     log.info("running as @%s", me.username)
-    await dp.start_polling(bot)
+
+    heartbeat = asyncio.create_task(_heartbeat())
+    try:
+        await dp.start_polling(bot)
+    finally:
+        heartbeat.cancel()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question or setup help
+    url: https://github.com/stder/telegram-voice-to-text-bot/discussions
+    about: For "how do I..." questions, use Discussions instead of an issue.
