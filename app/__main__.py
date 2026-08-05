@@ -39,6 +39,11 @@ async def main() -> None:
     except ConfigError as exc:
         raise SystemExit(f"config: {exc}") from None
 
+    # huggingface_hub reads HF_TOKEN from the environment on its own; we only surface
+    # its absence, because that is what the "unauthenticated requests" warning means.
+    if not os.getenv("HF_TOKEN"):
+        log.info("no HF_TOKEN set — model downloads use anonymous Hugging Face limits")
+
     log.info("loading model %s (%s)…", settings.model_name, settings.compute_type)
     transcriber = await asyncio.to_thread(Transcriber, settings)
     log.info("model ready")

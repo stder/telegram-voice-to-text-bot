@@ -39,6 +39,29 @@ minute or two. They are stored in a Docker volume and reused on every later star
 
 Once the log says `running as @yourbotname`, send the bot a voice message.
 
+## Updating
+
+Docker never updates anything on its own — `latest` is just a label, and the daemon keeps
+running the image it already pulled. From the folder holding your `docker-compose.yml`:
+
+```sh
+docker compose pull
+docker compose up -d
+```
+
+The model weights live in a separate volume, so nothing is downloaded again and `.env` is
+left alone. The replaced image stays on disk until you run `docker image prune -f`.
+
+`latest` follows the `main` branch, so it can be ahead of the newest release. To stay on a
+version you chose, pin it in `docker-compose.yml` and bump it deliberately:
+
+```yaml
+image: ghcr.io/stder/telegram-voice-to-text-bot:0.2.0
+```
+
+Published tags are listed on the
+[releases page](https://github.com/stder/telegram-voice-to-text-bot/releases).
+
 ## What it accepts
 
 Voice messages, audio files, video notes, video, and documents with an audio/video
@@ -69,8 +92,16 @@ Everything is set through `.env` — see `.env.example` for the full list.
 | `WHISPER_BEAM_SIZE` | `5` | `1` is roughly twice as fast on multi-core, slightly less accurate |
 | `WHISPER_CPU_THREADS` | `0` | `0` = every core available to the container |
 | `MAX_DURATION_SEC` | `0` | reject longer audio. `0` = no limit |
+| `HF_TOKEN` | empty | optional, only for the model download — see below |
 
-Two settings worth a second look:
+Three settings worth a second look:
+
+**`HF_TOKEN`.** The model weights are downloaded from Hugging Face on first start.
+Anonymous downloads work but share a low per-IP rate limit, and the hub prints
+`You are sending unauthenticated requests to the HF Hub` on every start. A free read
+token from [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) fixes
+both — put it in `.env` and restart. It is never used for anything except fetching the
+model.
 
 **`WHISPER_LANGUAGE`.** If the language is always the same, set it explicitly. This skips
 auto-detection and stops the model from drifting to another language on noisy passages.
