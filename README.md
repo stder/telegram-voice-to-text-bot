@@ -1,6 +1,6 @@
 # Telegram voice-to-text bot
 
-[![tests](https://github.com/stder/telegram-voice-to-text-bot/actions/workflows/tests.yml/badge.svg)](https://github.com/ТВОЙ_ЛОГИН/telegram-voice-to-text-bot/actions/workflows/tests.yml)
+[![tests](https://github.com/stder/telegram-voice-to-text-bot/actions/workflows/tests.yml/badge.svg)](https://github.com/stder/telegram-voice-to-text-bot/actions/workflows/tests.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Forward a Telegram voice message to this bot and get the text back. It transcribes voice
