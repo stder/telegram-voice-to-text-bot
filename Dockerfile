@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 # libgomp1 — the OpenMP runtime; CTranslate2 (the faster-whisper engine) won't start
 # without it.
